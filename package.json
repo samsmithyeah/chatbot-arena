@@ -9,16 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@chatscope/chat-ui-kit-react": "^1.10.1",
+    "@chatscope/chat-ui-kit-styles": "^1.4.0",
+    "@mantine/core": "^7.5.1",
+    "axios": "^1.6.7",
+    "next": "14.1.0",
+    "openai": "^4.26.0",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.1.0"
+    "react-error-boundary": "^4.0.12"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.1.0"
+    "eslint-config-next": "14.1.0",
+    "typescript": "^5"
   }
 }
