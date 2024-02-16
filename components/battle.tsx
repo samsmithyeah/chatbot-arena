@@ -1,122 +1,129 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, TextInput, Group, Grid, Paper } from "@mantine/core";
 import ChatColumn from "./ChatColumn";
-import {
-  ChatMessage,
-  Chats,
-  Models,
-  BattleTypes,
-  ChatSettings,
-} from "../pages/index";
+import { ChatMessage, BattleTypes, Chat } from "../pages/index";
 
 interface BattleProps {
-  getCompletion: (messages: ChatMessage[], chat: Chats, model: Models) => void;
-  isChatbotATyping: boolean;
-  isChatbotBTyping: boolean;
+  chatA: Chat;
+  chatB: Chat;
+  setChatA: React.Dispatch<React.SetStateAction<Chat>>;
+  setChatB: React.Dispatch<React.SetStateAction<Chat>>;
+  getCompletion: (chat: Chat) => void;
   chatStarted: boolean;
   inputValue: string;
   setInputValue: React.Dispatch<React.SetStateAction<string>>;
-  setChatAMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-  setChatBMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-  chatAMessages: ChatMessage[];
-  chatBMessages: ChatMessage[];
-  setIsChatbotATyping: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsChatbotBTyping: React.Dispatch<React.SetStateAction<boolean>>;
-  winner: Chats | null;
-  setWinner: React.Dispatch<React.SetStateAction<Chats | null>>;
   handleResetChats: (battleType: BattleTypes) => void;
   battleType: BattleTypes;
-  chatASettings: ChatSettings;
-  chatBSettings: ChatSettings;
 }
 
 const Battle = (props: BattleProps) => {
   const {
+    chatA,
+    chatB,
+    setChatA,
+    setChatB,
     getCompletion,
-    isChatbotATyping,
-    isChatbotBTyping,
     chatStarted,
     inputValue,
     setInputValue,
-    setChatAMessages,
-    setChatBMessages,
-    chatAMessages,
-    chatBMessages,
-    setIsChatbotATyping,
-    setIsChatbotBTyping,
-    winner,
-    setWinner,
     handleResetChats,
     battleType,
-    chatASettings,
-    chatBSettings,
   } = props;
 
+  const [disableInputs, setDisableInputs] = useState(false);
+
+  useEffect(() => {
+    if (
+      !chatStarted ||
+      chatA.botTyping ||
+      chatB.botTyping ||
+      chatA.isWinner ||
+      chatB.isWinner
+    ) {
+      setDisableInputs(true);
+    } else {
+      setDisableInputs(false);
+    }
+  }, [
+    chatA.botTyping,
+    chatB.botTyping,
+    chatA.isWinner,
+    chatB.isWinner,
+    chatStarted,
+  ]);
+
   const handleMessageSend = async () => {
-    setIsChatbotATyping(true);
-    setIsChatbotBTyping(true);
+    setChatA((prevChatA) => ({ ...prevChatA, botTyping: true }));
+    setChatB((prevChatB) => ({ ...prevChatB, botTyping: true }));
 
     if (chatStarted) {
       const newUserMessage: ChatMessage = { role: "user", content: inputValue };
 
-      const newChatA = [...chatAMessages, newUserMessage];
-      const newChatB = [...chatBMessages, newUserMessage];
+      const newChatA = {
+        ...chatA,
+        messages: [...chatA.messages, newUserMessage],
+      };
+      const newChatB = {
+        ...chatB,
+        messages: [...chatB.messages, newUserMessage],
+      };
 
-      setChatAMessages(newChatA);
-      setChatBMessages(newChatB);
+      setChatA((prevChatA) => ({
+        ...prevChatA,
+        messages: [...prevChatA.messages, newUserMessage],
+      }));
+      setChatB((prevChatB) => ({
+        ...prevChatB,
+        messages: [...prevChatB.messages, newUserMessage],
+      }));
 
       setInputValue("");
 
       switch (battleType) {
         case BattleTypes.PROMPT:
-          if (chatASettings.model) {
-            await getCompletion(newChatA, Chats.CHAT_A, chatASettings.model);
-            await getCompletion(newChatB, Chats.CHAT_B, chatASettings.model);
+          if (chatA.settings.model) {
+            await getCompletion(newChatA);
+            await getCompletion(newChatB);
+          } else {
+            console.error("chatA.settings.model is null");
           }
           break;
         case BattleTypes.MODEL:
-          if (chatASettings.model && chatBSettings.model) {
-            await getCompletion(newChatA, Chats.CHAT_A, chatASettings.model);
-            await getCompletion(newChatB, Chats.CHAT_B, chatBSettings.model);
+          if (chatA.settings.model && chatB.settings.model) {
+            await getCompletion(newChatA);
+            await getCompletion(newChatB);
+          } else {
+            console.error(
+              "chatA.settings.model or chatB.settings.model is null"
+            );
           }
           break;
       }
     } else {
+      console.log("handleMessageSend battleType", battleType);
       switch (battleType) {
         case BattleTypes.PROMPT:
-          if (chatASettings.model) {
-            await getCompletion(
-              chatAMessages,
-              Chats.CHAT_A,
-              chatASettings.model
-            );
-            await getCompletion(
-              chatBMessages,
-              Chats.CHAT_B,
-              chatASettings.model
-            );
+          if (chatA.settings.model) {
+            console.log("chatA.settings.model", chatA.settings.model);
+            await getCompletion(chatA);
+            await getCompletion(chatB);
+          } else {
+            console.error("chatA.settings.model is null");
           }
           break;
         case BattleTypes.MODEL:
-          if (chatASettings.model && chatBSettings.model) {
-            await getCompletion(
-              chatAMessages,
-              Chats.CHAT_A,
-              chatASettings.model
-            );
-            await getCompletion(
-              chatBMessages,
-              Chats.CHAT_B,
-              chatBSettings.model
+          if (chatA.settings.model && chatB.settings.model) {
+            await getCompletion(chatA);
+            await getCompletion(chatB);
+          } else {
+            console.error(
+              "chatA.settings.model or chatB.settings.model is null"
             );
           }
           break;
       }
     }
   };
-
-  const disableInputs =
-    !chatStarted || isChatbotATyping || isChatbotBTyping || !!winner;
 
   return (
     <Paper shadow="xs" radius={5} withBorder p="xl" mt="20">
@@ -125,15 +132,12 @@ const Battle = (props: BattleProps) => {
           <div
             style={{ display: "flex", flexDirection: "column", height: "100%" }}
           >
-            <ChatColumn
-              messages={chatAMessages}
-              typing={isChatbotATyping}
-              chat={Chats.CHAT_A}
-              winner={winner}
-            />
+            <ChatColumn chat={chatA} />
             <Button
               variant="outline"
-              onClick={() => setWinner(Chats.CHAT_A)}
+              onClick={() =>
+                setChatA((prevChatA) => ({ ...prevChatA, isWinner: true }))
+              }
               disabled={disableInputs}
               style={{ alignSelf: "flex-end" }}
             >
@@ -145,15 +149,12 @@ const Battle = (props: BattleProps) => {
           <div
             style={{ display: "flex", flexDirection: "column", height: "100%" }}
           >
-            <ChatColumn
-              messages={chatBMessages}
-              typing={isChatbotBTyping}
-              chat={Chats.CHAT_B}
-              winner={winner}
-            />
+            <ChatColumn chat={chatB} />
             <Button
               variant="outline"
-              onClick={() => setWinner(Chats.CHAT_B)}
+              onClick={() =>
+                setChatB((prevChatB) => ({ ...prevChatB, isWinner: true }))
+              }
               disabled={disableInputs}
               style={{ alignSelf: "flex-start" }}
             >
@@ -174,7 +175,12 @@ const Battle = (props: BattleProps) => {
         />
         <Button
           onClick={handleMessageSend}
-          disabled={isChatbotATyping || isChatbotBTyping || !!winner}
+          disabled={
+            chatA.botTyping ||
+            chatB.botTyping ||
+            chatA.isWinner ||
+            chatB.isWinner
+          }
         >
           {chatStarted ? "Send" : "Start chat"}
         </Button>

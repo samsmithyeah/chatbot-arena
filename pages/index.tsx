@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Group, Title, Select, Paper, Grid } from "@mantine/core";
+import { Group, Title, Select, Grid } from "@mantine/core";
 import { useRouter } from "next/router";
 import Battle from "@/components/battle";
 import Settings from "@/components/settings";
@@ -15,7 +15,7 @@ export enum BattleTypes {
   MODEL = "Model",
 }
 
-export enum Chats {
+export enum ChatNames {
   CHAT_A = "Chat A",
   CHAT_B = "Chat B",
 }
@@ -35,45 +35,56 @@ export interface ChatSettings {
   prompt: Prompt | null;
 }
 
-const promptADefault = {
+export interface Chat {
+  name: ChatNames;
+  messages: ChatMessage[];
+  settings: ChatSettings;
+  botTyping: boolean;
+  isWinner: boolean;
+}
+
+const promptADefault: Prompt = {
   name: "Prompt A",
   content:
     "Your task is to pretend to be a very rude, unhelpful AI assistant, created for a joke. Start the chat by asking the user for their name. You don't need to prefix your messages with 'AI: ' or anything like that. Just the message.",
 };
-const promptBDefault = {
+const promptBDefault: Prompt = {
   name: "Prompt B",
   content:
     "Your task is to pretend to be a very overly, almost annoyingly polite and apologetic AI assistant. Start the chat by asking the user for their name. You don't need to prefix your messages with 'AI: ' or anything like that. Just the message.",
 };
 
 const HomePage = () => {
-  const [chatAMessages, setChatAMessages] = useState<ChatMessage[]>([]);
-  const [chatBMessages, setChatBMessages] = useState<ChatMessage[]>([]);
-  const [chatASettings, setChatASettings] = useState<ChatSettings>({
-    model: null,
-    prompt: null,
-  });
-  const [chatBSettings, setChatBSettings] = useState<ChatSettings>({
-    model: null,
-    prompt: null,
-  });
-  const [isChatbotATyping, setIsChatbotATyping] = useState(false);
-  const [isChatbotBTyping, setIsChatbotBTyping] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [winner, setWinner] = useState<Chats | null>(null);
+  const [chatA, setChatA] = useState<Chat>({
+    name: ChatNames.CHAT_A,
+    messages: [],
+    settings: {
+      model: null,
+      prompt: null,
+    },
+    botTyping: false,
+    isWinner: false,
+  });
+  const [chatB, setChatB] = useState<Chat>({
+    name: ChatNames.CHAT_B,
+    messages: [],
+    settings: {
+      model: null,
+      prompt: null,
+    },
+    botTyping: false,
+    isWinner: false,
+  });
   const [modelAUserInput, setModelAUserInput] = useState<Models>(Models.GPT3_5);
   const [modelBUserInput, setModelBUserInput] = useState<Models>(Models.GPT4);
   const [promptAUserInput, setPromptAUserInput] =
     useState<Prompt>(promptADefault);
   const [promptBUserInput, setPromptBUserInput] =
     useState<Prompt>(promptBDefault);
+  const [chatStarted, setChatStarted] = useState(false);
 
   const router = useRouter();
-
-  const chatStarted =
-    (chatAMessages.length > 1 && chatBMessages.length > 1) ||
-    isChatbotATyping ||
-    isChatbotBTyping;
 
   const initialBattleType =
     (router.query.battleType as BattleTypes) || BattleTypes.PROMPT;
@@ -92,62 +103,95 @@ const HomePage = () => {
     }
   }, [router.query.battleType]);
 
+  useEffect(() => {
+    console.log("chatStarted", chatA);
+    console.log("chatStarted", chatB);
+    if (
+      (chatA.messages.length > 1 && chatB.messages.length > 1) ||
+      chatA.botTyping ||
+      chatB.botTyping
+    ) {
+      setChatStarted(true);
+    } else {
+      setChatStarted(false);
+    }
+  }, [chatA.messages, chatB.messages, chatA.botTyping, chatB.botTyping]);
+
+  useEffect(() => {
+    console.log("chatStarted", chatStarted);
+  }, [chatStarted]);
+
   const handleResetChats = (battleType: BattleTypes) => {
     switch (battleType) {
       case BattleTypes.PROMPT:
         console.log("in prompt type reset");
         const chatAMessagesGetsPromptA = Math.random() < 0.5;
         console.log("chatAMessagesGetsPromptA", chatAMessagesGetsPromptA);
-        setChatASettings({
-          model: modelAUserInput,
-          prompt: chatAMessagesGetsPromptA
-            ? promptAUserInput
-            : promptBUserInput,
-        });
-        setChatBSettings({
-          model: modelAUserInput,
-          prompt: chatAMessagesGetsPromptA
-            ? promptBUserInput
-            : promptAUserInput,
-        });
-        setChatAMessages([
-          {
-            role: "system",
-            content: chatAMessagesGetsPromptA
-              ? promptAUserInput.content
-              : promptBUserInput.content,
+        console.log("promptAUserInput", promptAUserInput);
+        console.log("promptBUserInput", promptBUserInput);
+        console.log("modelAUserInput", modelAUserInput);
+        console.log("modelBUserInput", modelBUserInput);
+        setChatA((prevChatA) => ({
+          ...prevChatA,
+          settings: {
+            model: modelAUserInput,
+            prompt: chatAMessagesGetsPromptA
+              ? promptAUserInput
+              : promptBUserInput,
           },
-        ]);
-        setChatBMessages([
-          {
-            role: "system",
-            content: chatAMessagesGetsPromptA
-              ? promptBUserInput.content
-              : promptAUserInput.content,
+          messages: [
+            {
+              role: "system",
+              content: chatAMessagesGetsPromptA
+                ? promptAUserInput.content
+                : promptBUserInput.content,
+            },
+          ],
+          isWinner: false,
+        }));
+        setChatB((prevChatB) => ({
+          ...prevChatB,
+          settings: {
+            model: modelBUserInput,
+            prompt: chatAMessagesGetsPromptA
+              ? promptBUserInput
+              : promptAUserInput,
           },
-        ]);
+          messages: [
+            {
+              role: "system",
+              content: chatAMessagesGetsPromptA
+                ? promptBUserInput.content
+                : promptAUserInput.content,
+            },
+          ],
+          isWinner: false,
+        }));
         break;
       case BattleTypes.MODEL:
         console.log("in model type reset");
         const chatAMessagesGetsModelA = Math.random() < 0.5;
         console.log("chatAMessagesGetsModelA", chatAMessagesGetsModelA);
-        setChatASettings({
-          model: chatAMessagesGetsModelA ? modelAUserInput : modelBUserInput,
-          prompt: promptAUserInput,
-        });
-        setChatBSettings({
-          model: chatAMessagesGetsModelA ? modelBUserInput : modelAUserInput,
-          prompt: promptAUserInput,
-        });
-        setChatAMessages([
-          { role: "system", content: promptAUserInput.content },
-        ]);
-        setChatBMessages([
-          { role: "system", content: promptAUserInput.content },
-        ]);
+        setChatA((prevChatA) => ({
+          ...prevChatA,
+          settings: {
+            model: chatAMessagesGetsModelA ? modelAUserInput : modelBUserInput,
+            prompt: promptAUserInput,
+          },
+          messages: [{ role: "system", content: promptAUserInput.content }],
+          isWinner: false,
+        }));
+        setChatB((prevChatB) => ({
+          ...prevChatB,
+          settings: {
+            model: chatAMessagesGetsModelA ? modelBUserInput : modelAUserInput,
+            prompt: promptAUserInput,
+          },
+          messages: [{ role: "system", content: promptAUserInput.content }],
+          isWinner: false,
+        }));
         break;
     }
-    setWinner(null);
     console.log("reset chats");
   };
 
@@ -157,29 +201,35 @@ const HomePage = () => {
     }
   };
 
-  const getCompletion = async (
-    messages: ChatMessage[],
-    chat: Chats,
-    model: Models
-  ) => {
+  const getCompletion = async (chat: Chat) => {
+    console.log("getCompletion chat", chat);
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, model }),
+      body: JSON.stringify({
+        messages: chat.messages,
+        model: chat.settings.model,
+      }),
     });
     const data = await response.json();
     const assistantResponse: ChatMessage = {
       role: "assistant",
       content: data.message,
     };
-    switch (chat) {
-      case Chats.CHAT_A:
-        setChatAMessages((prevChat) => [...prevChat, assistantResponse]);
-        setIsChatbotATyping(false);
+    switch (chat.name) {
+      case ChatNames.CHAT_A:
+        setChatA((prevChatA) => ({
+          ...prevChatA,
+          messages: [...prevChatA.messages, assistantResponse],
+          botTyping: false,
+        }));
         break;
-      case Chats.CHAT_B:
-        setChatBMessages((prevChat) => [...prevChat, assistantResponse]);
-        setIsChatbotBTyping(false);
+      case ChatNames.CHAT_B:
+        setChatB((prevChatB) => ({
+          ...prevChatB,
+          messages: [...prevChatB.messages, assistantResponse],
+          botTyping: false,
+        }));
         break;
     }
   };
@@ -214,33 +264,20 @@ const HomePage = () => {
         <Grid.Col span={9}>
           <Battle
             getCompletion={getCompletion}
-            isChatbotATyping={isChatbotATyping}
-            isChatbotBTyping={isChatbotBTyping}
             chatStarted={chatStarted}
             inputValue={inputValue}
             setInputValue={setInputValue}
-            setChatAMessages={setChatAMessages}
-            setChatBMessages={setChatBMessages}
-            chatAMessages={chatAMessages}
-            chatBMessages={chatBMessages}
-            setIsChatbotATyping={setIsChatbotATyping}
-            setIsChatbotBTyping={setIsChatbotBTyping}
-            winner={winner}
-            setWinner={setWinner}
             handleResetChats={handleResetChats}
             battleType={battleType}
-            chatASettings={chatASettings}
-            chatBSettings={chatBSettings}
+            chatA={chatA}
+            chatB={chatB}
+            setChatA={setChatA}
+            setChatB={setChatB}
           ></Battle>
         </Grid.Col>
       </Grid>
-      {winner && (
-        <Winner
-          battleType={battleType}
-          winner={winner}
-          chatASettings={chatASettings}
-          chatBSettings={chatBSettings}
-        />
+      {(chatA.isWinner || chatB.isWinner) && (
+        <Winner battleType={battleType} chatA={chatA} chatB={chatB} />
       )}
     </>
   );
