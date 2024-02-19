@@ -1,18 +1,20 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Select, Textarea } from "@mantine/core";
-import { BattleTypes, Models, ChatMessage, Prompt } from "../pages/index";
+import { BattleTypes, ChatMessage, Prompt } from "../pages/index";
+import { UUID } from "crypto";
 
 interface SettingsProps {
   battleType: BattleTypes;
-  modelAUserInput: Models;
-  modelBUserInput: Models;
-  setModelAUserInput: React.Dispatch<React.SetStateAction<Models>>;
-  setModelBUserInput: React.Dispatch<React.SetStateAction<Models>>;
+  modelAUserInput: string | undefined;
+  modelBUserInput: string | undefined;
+  setModelAUserInput: React.Dispatch<React.SetStateAction<string | undefined>>;
+  setModelBUserInput: React.Dispatch<React.SetStateAction<string | undefined>>;
   promptAUserInput: Prompt;
   promptBUserInput: Prompt;
   setPromptAUserInput: React.Dispatch<React.SetStateAction<Prompt>>;
   setPromptBUserInput: React.Dispatch<React.SetStateAction<Prompt>>;
   chatStarted: boolean;
+  models: string[] | undefined;
 }
 
 const Settings = (props: SettingsProps) => {
@@ -27,9 +29,8 @@ const Settings = (props: SettingsProps) => {
     setPromptAUserInput,
     setPromptBUserInput,
     chatStarted,
+    models,
   } = props;
-
-  const modelOptions = Object.values(Models);
 
   const handlePromptAChange = (newPrompt: string) => {
     setPromptAUserInput({ ...promptAUserInput, content: newPrompt });
@@ -46,17 +47,17 @@ const Settings = (props: SettingsProps) => {
           <Select
             label="Model A"
             placeholder="Select Model A"
-            data={modelOptions}
+            data={models}
             value={modelAUserInput}
-            onChange={() => setModelAUserInput}
+            onChange={(value) => setModelAUserInput(value as string)}
             disabled={chatStarted}
           />
           <Select
             label="Model B"
             placeholder="Select Model B"
-            data={modelOptions}
+            data={models}
             value={modelBUserInput}
-            onChange={() => setModelBUserInput}
+            onChange={(value) => setModelBUserInput(value as string)}
             disabled={chatStarted}
           />
           <Textarea
@@ -77,9 +78,9 @@ const Settings = (props: SettingsProps) => {
           <Select
             label="Model"
             placeholder="Select a model"
-            data={modelOptions}
+            data={models}
             value={modelAUserInput}
-            onChange={() => setModelAUserInput}
+            onChange={(value) => setModelAUserInput(value as string)}
           />
           <Textarea
             label="Prompt A"

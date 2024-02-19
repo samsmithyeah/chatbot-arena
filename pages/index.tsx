@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Battle from "@/components/battle";
 import Settings from "@/components/settings";
 import Winner from "@/components/winner";
+import { UUID } from "crypto";
 
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -20,19 +21,26 @@ export enum ChatNames {
   CHAT_B = "Chat B",
 }
 
-export enum Models {
-  GPT3_5 = "gpt-3.5-turbo",
-  GPT4 = "gpt-4",
-}
+// export enum Models {
+//   GPT3_5 = "gpt-3.5-turbo",
+//   GPT4 = "gpt-4",
+// }
 
+interface Model {
+  id: UUID;
+  provider: string;
+  tokenLimit: number;
+  type: string;
+  serviceModelId: string;
+}
 export interface Prompt {
   name: string;
   content: string;
 }
 
 export interface ChatSettings {
-  model: Models | null;
-  prompt: Prompt | null;
+  model: string | undefined;
+  prompt: Prompt | undefined;
 }
 
 export interface Chat {
@@ -60,8 +68,8 @@ const HomePage = () => {
     name: ChatNames.CHAT_A,
     messages: [],
     settings: {
-      model: null,
-      prompt: null,
+      model: undefined,
+      prompt: undefined,
     },
     botTyping: false,
     isWinner: false,
@@ -70,20 +78,20 @@ const HomePage = () => {
     name: ChatNames.CHAT_B,
     messages: [],
     settings: {
-      model: null,
-      prompt: null,
+      model: undefined,
+      prompt: undefined,
     },
     botTyping: false,
     isWinner: false,
   });
-  const [modelAUserInput, setModelAUserInput] = useState<Models>(Models.GPT3_5);
-  const [modelBUserInput, setModelBUserInput] = useState<Models>(Models.GPT4);
+  const [modelAUserInput, setModelAUserInput] = useState<string | undefined>();
+  const [modelBUserInput, setModelBUserInput] = useState<string | undefined>();
   const [promptAUserInput, setPromptAUserInput] =
     useState<Prompt>(promptADefault);
   const [promptBUserInput, setPromptBUserInput] =
     useState<Prompt>(promptBDefault);
   const [chatStarted, setChatStarted] = useState(false);
-
+  const [models, setModels] = useState<string[] | undefined>(undefined);
   const router = useRouter();
 
   const initialBattleType =
@@ -91,6 +99,25 @@ const HomePage = () => {
   const [battleType, setBattleType] = useState<BattleTypes>(initialBattleType);
 
   const battleTypeOptions = Object.values(BattleTypes);
+
+  useEffect(() => {
+    const getModels = async () => {
+      const response = await fetch("/api/models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      const models = data.message;
+      const modelNames = models.map((model: Model) => model.serviceModelId);
+      setModels(modelNames);
+    };
+    getModels();
+  }, []);
+
+  useEffect(() => {
+    console.log("modelAUserInput", modelAUserInput);
+    console.log("modelBUserInput", modelBUserInput);
+  }, [modelAUserInput, modelBUserInput]);
 
   useEffect(() => {
     const queryBattleType = router.query.battleType as BattleTypes;
@@ -243,6 +270,7 @@ const HomePage = () => {
             promptBUserInput={promptBUserInput}
             setPromptBUserInput={setPromptBUserInput}
             chatStarted={chatStarted}
+            models={models}
           />
         </Grid.Col>
         <Grid.Col span={9}>
