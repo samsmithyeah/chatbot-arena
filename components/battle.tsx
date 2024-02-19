@@ -100,11 +100,9 @@ const Battle = (props: BattleProps) => {
           break;
       }
     } else {
-      console.log("handleMessageSend battleType", battleType);
       switch (battleType) {
         case BattleTypes.PROMPT:
           if (chatA.settings.model) {
-            console.log("chatA.settings.model", chatA.settings.model);
             await getCompletion(chatA);
             await getCompletion(chatB);
           } else {

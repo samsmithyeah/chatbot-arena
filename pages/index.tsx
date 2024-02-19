@@ -104,8 +104,6 @@ const HomePage = () => {
   }, [router.query.battleType]);
 
   useEffect(() => {
-    console.log("chatStarted", chatA);
-    console.log("chatStarted", chatB);
     if (
       (chatA.messages.length > 1 && chatB.messages.length > 1) ||
       chatA.botTyping ||
@@ -117,20 +115,10 @@ const HomePage = () => {
     }
   }, [chatA.messages, chatB.messages, chatA.botTyping, chatB.botTyping]);
 
-  useEffect(() => {
-    console.log("chatStarted", chatStarted);
-  }, [chatStarted]);
-
   const handleResetChats = (battleType: BattleTypes) => {
     switch (battleType) {
       case BattleTypes.PROMPT:
-        console.log("in prompt type reset");
         const chatAMessagesGetsPromptA = Math.random() < 0.5;
-        console.log("chatAMessagesGetsPromptA", chatAMessagesGetsPromptA);
-        console.log("promptAUserInput", promptAUserInput);
-        console.log("promptBUserInput", promptBUserInput);
-        console.log("modelAUserInput", modelAUserInput);
-        console.log("modelBUserInput", modelBUserInput);
         setChatA((prevChatA) => ({
           ...prevChatA,
           settings: {
@@ -169,9 +157,7 @@ const HomePage = () => {
         }));
         break;
       case BattleTypes.MODEL:
-        console.log("in model type reset");
         const chatAMessagesGetsModelA = Math.random() < 0.5;
-        console.log("chatAMessagesGetsModelA", chatAMessagesGetsModelA);
         setChatA((prevChatA) => ({
           ...prevChatA,
           settings: {
@@ -192,7 +178,6 @@ const HomePage = () => {
         }));
         break;
     }
-    console.log("reset chats");
   };
 
   const handleBattleTypeChange = (value: string | null) => {
@@ -202,7 +187,6 @@ const HomePage = () => {
   };
 
   const getCompletion = async (chat: Chat) => {
-    console.log("getCompletion chat", chat);
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -11,10 +11,6 @@ const ChatColumn = (props: ChatColumnProps) => {
   const theme = useMantineTheme();
   const { chat } = props;
 
-  useEffect(() => {
-    console.log("messages", chat.messages);
-  }, [chat.messages]);
-
   return (
     <>
       <Paper
