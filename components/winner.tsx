@@ -1,37 +1,35 @@
 import React from "react";
 import { Text } from "@mantine/core";
-import { BattleTypes, Chats, ChatSettings } from "../pages/index";
+import { BattleTypes, Chat } from "../pages/index";
 
 interface WinnerProps {
   battleType: BattleTypes;
-  chatASettings: ChatSettings;
-  chatBSettings: ChatSettings;
-  winner: Chats | null;
+  chatA: Chat;
+  chatB: Chat;
 }
 
 const Winner = (props: WinnerProps) => {
-  const { battleType, chatASettings, chatBSettings, winner } = props;
+  const { battleType, chatA, chatB } = props;
 
   return (
     <>
       {battleType === BattleTypes.MODEL && (
         <Text size="lg">
-          Winner:{" "}
-          {winner === Chats.CHAT_A ? chatASettings.model : chatBSettings.model}
+          Winner: {chatA.isWinner ? chatA.settings.model : chatB.settings.model}
         </Text>
       )}
       {battleType === BattleTypes.PROMPT && (
         <>
           <Text size="lg">
             Winner:{" "}
-            {winner === Chats.CHAT_A
-              ? chatASettings.prompt?.name
-              : chatBSettings.prompt?.name}
+            {chatA.isWinner
+              ? chatA.settings.prompt?.name
+              : chatB.settings.prompt?.name}
           </Text>
           <Text size="sm">
-            {winner === Chats.CHAT_A
-              ? chatASettings.prompt?.content
-              : chatBSettings.prompt?.content}
+            {chatA.isWinner
+              ? chatA.settings.prompt?.content
+              : chatB.settings.prompt?.content}
           </Text>
         </>
       )}

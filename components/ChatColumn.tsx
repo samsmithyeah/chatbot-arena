@@ -1,23 +1,15 @@
 import React, { useEffect } from "react";
-import { Paper, Text, ScrollArea, Grid, useMantineTheme } from "@mantine/core";
-import { ChatMessage } from "../pages/index";
+import { Paper, Text, ScrollArea, useMantineTheme } from "@mantine/core";
 import TypingIndicator from "./TypingIndicator";
-import { BattleTypes, Chats } from "../pages/index";
+import { Chat } from "../pages/index";
 
 interface ChatColumnProps {
-  messages: ChatMessage[];
-  typing: boolean;
-  chat: Chats;
-  winner: Chats | null;
+  chat: Chat;
 }
 
 const ChatColumn = (props: ChatColumnProps) => {
   const theme = useMantineTheme();
-  const { messages, typing, chat, winner } = props;
-
-  useEffect(() => {
-    console.log("messages", messages);
-  }, [messages]);
+  const { chat } = props;
 
   return (
     <>
@@ -25,15 +17,15 @@ const ChatColumn = (props: ChatColumnProps) => {
         style={{
           padding: "10px",
           marginBottom: "10px",
-          borderColor: chat === winner ? "blue" : "white",
-          borderStyle: chat === winner ? "solid" : "solid",
+          borderColor: chat.isWinner ? "blue" : "white",
+          borderStyle: chat.isWinner ? "solid" : "solid",
         }}
       >
         <Text size="lg" mb="md">
-          {chat}
+          {chat.name}
         </Text>
         <ScrollArea style={{ height: 375 }}>
-          {messages
+          {chat.messages
             .filter((message) => message.role !== "system")
             .map((message, index) => (
               <Paper
@@ -52,7 +44,7 @@ const ChatColumn = (props: ChatColumnProps) => {
                 <Text size="sm">{message.content}</Text>
               </Paper>
             ))}
-          {typing && <TypingIndicator />}
+          {chat.botTyping && <TypingIndicator />}
         </ScrollArea>
       </Paper>
     </>
