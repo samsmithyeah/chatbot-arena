@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Battle from "@/components/battle";
 import Settings from "@/components/settings";
 import Winner from "@/components/winner";
+import { UUID } from "crypto";
 
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -20,19 +21,26 @@ export enum ChatNames {
   CHAT_B = "Chat B",
 }
 
-export enum Models {
+export enum HardCodedModels {
   GPT3_5 = "gpt-3.5-turbo",
   GPT4 = "gpt-4",
 }
 
+interface Model {
+  id: UUID;
+  provider: string;
+  tokenLimit: number;
+  type: string;
+  serviceModelId: string;
+}
 export interface Prompt {
   name: string;
   content: string;
 }
 
 export interface ChatSettings {
-  model: Models | null;
-  prompt: Prompt | null;
+  model: string | undefined;
+  prompt: Prompt | undefined;
 }
 
 export interface Chat {
@@ -60,8 +68,8 @@ const HomePage = () => {
     name: ChatNames.CHAT_A,
     messages: [],
     settings: {
-      model: null,
-      prompt: null,
+      model: undefined,
+      prompt: undefined,
     },
     botTyping: false,
     isWinner: false,
@@ -70,20 +78,22 @@ const HomePage = () => {
     name: ChatNames.CHAT_B,
     messages: [],
     settings: {
-      model: null,
-      prompt: null,
+      model: undefined,
+      prompt: undefined,
     },
     botTyping: false,
     isWinner: false,
   });
-  const [modelAUserInput, setModelAUserInput] = useState<Models>(Models.GPT3_5);
-  const [modelBUserInput, setModelBUserInput] = useState<Models>(Models.GPT4);
+  const [modelAUserInput, setModelAUserInput] = useState<string | undefined>();
+  const [modelBUserInput, setModelBUserInput] = useState<string | undefined>();
   const [promptAUserInput, setPromptAUserInput] =
     useState<Prompt>(promptADefault);
   const [promptBUserInput, setPromptBUserInput] =
     useState<Prompt>(promptBDefault);
   const [chatStarted, setChatStarted] = useState(false);
-
+  const [promptServiceModels, setPromptServiceModels] = useState<
+    string[] | undefined
+  >(undefined);
   const router = useRouter();
 
   const initialBattleType =
@@ -92,6 +102,39 @@ const HomePage = () => {
 
   const battleTypeOptions = Object.values(BattleTypes);
 
+  const hardCodedModels = Object.values(HardCodedModels);
+
+  useEffect(() => {
+    const getModels = async () => {
+      try {
+        const response = await fetch("/api/models", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json();
+        const models = data.message;
+        const modelNames = models.map((model: Model) => model.serviceModelId);
+        setPromptServiceModels(modelNames);
+      } catch (error) {
+        console.error(
+          "Error fetching models - is the prompt service running?",
+          error
+        );
+      }
+    };
+    getModels();
+  }, []);
+
+  useEffect(() => {
+    handleResetChats(battleType);
+  }, [
+    modelAUserInput,
+    modelBUserInput,
+    promptAUserInput,
+    promptBUserInput,
+    battleType,
+  ]);
+
   useEffect(() => {
     const queryBattleType = router.query.battleType as BattleTypes;
     if (
@@ -99,7 +142,6 @@ const HomePage = () => {
       Object.values(BattleTypes).includes(queryBattleType)
     ) {
       setBattleType(queryBattleType);
-      handleResetChats(queryBattleType);
     }
   }, [router.query.battleType]);
 
@@ -243,6 +285,8 @@ const HomePage = () => {
             promptBUserInput={promptBUserInput}
             setPromptBUserInput={setPromptBUserInput}
             chatStarted={chatStarted}
+            promptServiceModels={promptServiceModels}
+            hardCodedModels={hardCodedModels}
           />
         </Grid.Col>
         <Grid.Col span={9}>
