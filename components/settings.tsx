@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Select, Textarea } from "@mantine/core";
+import { Select, Textarea, Divider } from "@mantine/core";
 import { BattleTypes, HardCodedModels, Prompt } from "../pages/index";
 
 interface SettingsProps {
@@ -71,6 +71,7 @@ const Settings = (props: SettingsProps) => {
         onChange={(value) => handleModelSourceChange(value as ModelSources)}
         disabled={chatStarted}
       />
+      <Divider my="sm" />
       {battleType === BattleTypes.MODEL && (
         <>
           <Select
@@ -89,6 +90,7 @@ const Settings = (props: SettingsProps) => {
             onChange={(value) => setModelBUserInput(value as string)}
             disabled={chatStarted}
           />
+          <Divider my="sm" />
           <Textarea
             label="Prompt"
             placeholder="Enter your prompt"
@@ -111,6 +113,7 @@ const Settings = (props: SettingsProps) => {
             value={modelAUserInput}
             onChange={(value) => setModelAUserInput(value as string)}
           />
+          <Divider my="sm" />
           <Textarea
             label="Prompt A"
             placeholder="Enter Prompt A"
