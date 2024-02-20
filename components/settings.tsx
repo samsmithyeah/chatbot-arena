@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Select, Textarea } from "@mantine/core";
-import { BattleTypes, ChatMessage, Prompt } from "../pages/index";
-import { UUID } from "crypto";
+import { BattleTypes, HardCodedModels, Prompt } from "../pages/index";
 
 interface SettingsProps {
   battleType: BattleTypes;
@@ -14,7 +13,13 @@ interface SettingsProps {
   setPromptAUserInput: React.Dispatch<React.SetStateAction<Prompt>>;
   setPromptBUserInput: React.Dispatch<React.SetStateAction<Prompt>>;
   chatStarted: boolean;
-  models: string[] | undefined;
+  promptServiceModels: string[] | undefined;
+  hardCodedModels: HardCodedModels[];
+}
+
+enum ModelSources {
+  HARD_CODED = "Hard Coded",
+  PROMPT_SERVICE = "Prompt Service",
 }
 
 const Settings = (props: SettingsProps) => {
@@ -29,8 +34,14 @@ const Settings = (props: SettingsProps) => {
     setPromptAUserInput,
     setPromptBUserInput,
     chatStarted,
-    models,
+    promptServiceModels,
+    hardCodedModels,
   } = props;
+
+  const [modelSource, setModelSource] = useState<ModelSources>(
+    promptServiceModels ? ModelSources.PROMPT_SERVICE : ModelSources.HARD_CODED
+  );
+  const [models, setModels] = useState<string[]>([]);
 
   const handlePromptAChange = (newPrompt: string) => {
     setPromptAUserInput({ ...promptAUserInput, content: newPrompt });
@@ -40,8 +51,26 @@ const Settings = (props: SettingsProps) => {
     setPromptBUserInput({ ...promptBUserInput, content: newPrompt });
   };
 
+  const handleModelSourceChange = (modelSource: ModelSources) => {
+    if (modelSource === ModelSources.HARD_CODED) {
+      setModelSource(modelSource);
+      setModels(hardCodedModels);
+    } else {
+      setModelSource(ModelSources.PROMPT_SERVICE);
+      setModels(promptServiceModels || []);
+    }
+  };
+
   return (
     <div>
+      <Select
+        label="Model source"
+        placeholder="Select model source"
+        data={["Hard Coded", "Prompt Service"]}
+        value={modelSource}
+        onChange={(value) => handleModelSourceChange(value as ModelSources)}
+        disabled={chatStarted}
+      />
       {battleType === BattleTypes.MODEL && (
         <>
           <Select

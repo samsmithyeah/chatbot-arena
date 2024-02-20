@@ -100,7 +100,6 @@ const Battle = (props: BattleProps) => {
           break;
       }
     } else {
-      handleResetChats(battleType);
       switch (battleType) {
         case BattleTypes.PROMPT:
           if (chatA.settings.model) {
